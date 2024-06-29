@@ -1,0 +1,19 @@
+{
+  "name": "64bit",
+  "version": "1.0.0",
+  "description": "Showcase website to put on my domain name",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biskweet/64bit.git"
+  },
+  "author": "biskweet",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/biskweet/64bit/issues"
+  },
+  "homepage": "https://github.com/biskweet/64bit#readme"
+}
