@@ -127,13 +127,7 @@
             draw();
         }
 
-        const onMouseHover = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const mouseX = event.clientX;
-            const mouseY = event.clientY;
-
+        const wakeUpCell = (mouseX, mouseY) => {
             const i = Math.floor((mouseX - xPadding) / (CELLSIZE + CELLMARGIN));
             const j = Math.floor((mouseY - yPadding) / (CELLSIZE + CELLMARGIN));
 
@@ -153,10 +147,30 @@
             )
         }
 
+        const onMouseHover = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            wakeUpCell(mouseX, mouseY);
+        }
+
+        const onTouchMove = (event) => {
+            const touch = event.touches[0];
+            var mouseEvent = new MouseEvent("mousemove", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+
         window.addEventListener("resize", resizeCanvas, false);
         resizeCanvas();
 
         canvas.onmousemove = onMouseHover
+        canvas.addEventListener("touchmove", onTouchMove);
 
         setInterval(step, FRAMERATE);
     </script>
