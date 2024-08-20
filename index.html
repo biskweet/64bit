@@ -1,9 +1,164 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>64bit.dev for sale!</title>
+    <title>64bit.dev for sale!</title>
+    <style type="text/css">
+        body, #gol {
+            padding: 0;
+            margin: 0;
+            border: 0;
+        }
+
+        #gol {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+        }
+    </style>
 </head>
 <body>
-64bit.dev is for sale!
+    <canvas id="gol"></canvas>
+    <script>
+        class Cell {
+            constructor(x, y, alive) {
+                this.xcoord = x;
+                this.ycoord = y;
+                this.alive = alive;
+            }
+
+            clone() {
+                return new Cell(this.xcoord, this.ycoord, this.alive);
+            }
+        }
+
+        const mod = (x, y) => ((x % y) + y) % y;
+        let canvas = document.querySelector("canvas#gol");
+        let ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let drawn = false;
+        let cells = [];
+
+        const CELLSIZE = 10; // px
+        const CELLMARGIN = 3; // px
+        const FRAMERATE = 1000 * 1 / 10;
+
+        let xPadding = 0;
+        let yPadding = 0;
+        let xCount = 0;
+        let yCount = 0;
+
+        const step = () => {
+            const newCells = [ ];
+
+            for (let j = 0; j < yCount + 2; j++) {
+                for (let i = 0; i < xCount + 2; i++) {
+                    const neighbors = [
+                        cells[mod(j - 1, yCount + 2) * (xCount + 2) + mod(i - 1, xCount + 2)],
+                        cells[mod(j - 1, yCount + 2) * (xCount + 2) + i],
+                        cells[mod(j - 1, yCount + 2) * (xCount + 2) + mod(i + 1, xCount + 2)],
+                        cells[j * (xCount + 2) + mod(i - 1, xCount)],
+                        cells[j * (xCount + 2) + mod(i + 1, xCount)],
+                        cells[mod(j + 1, yCount + 2) * (xCount + 2) + mod(i - 1, xCount + 2)],
+                        cells[mod(j + 1, yCount + 2) * (xCount + 2) + i],
+                        cells[mod(j + 1, yCount + 2) * (xCount + 2) + mod(i + 1, xCount + 2)]
+                    ];
+
+                    const aliveNeighborsCount = neighbors.reduce((total, cell) => total + cell.alive, 0);
+                    const cell = cells[j * (xCount + 2) + i];
+
+                    let newCell = cell.clone();
+
+                    newCell.alive = (aliveNeighborsCount == 3) || (newCell.alive && aliveNeighborsCount == 2);
+
+                    newCells.push(newCell);
+                }
+            }
+
+            cells = newCells;
+
+            draw()
+        }
+
+        const draw = () => {
+            for (const cell of cells) {
+                try {
+                ctx.fillStyle = cell.alive ? "lightgrey" : "black";
+                } catch (err) {
+                    console.log(cells)
+                }
+
+                ctx.fillRect(
+                    cell.xcoord,
+                    cell.ycoord,
+                    CELLSIZE,
+                    CELLSIZE
+                )
+            }
+
+            drawn = true;
+        }
+
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            cells = [];
+
+            xCount = Math.floor((canvas.width - CELLMARGIN) / (CELLSIZE + CELLMARGIN));
+            yCount = Math.floor((canvas.height - CELLMARGIN) / (CELLSIZE + CELLMARGIN));
+
+            xPadding = (canvas.width - (xCount + 2) * (CELLSIZE + CELLMARGIN) + CELLMARGIN) / 2;
+            yPadding = (canvas.height - (yCount + 2) * (CELLSIZE + CELLMARGIN) + CELLMARGIN) / 2;
+
+            for (let y = 0; y < yCount + 2; y++) {
+                for (let x = 0; x < xCount + 2; x++) {
+                    cells.push(new Cell(
+                        xPadding + x * (CELLSIZE + CELLMARGIN),
+                        yPadding + y * (CELLSIZE + CELLMARGIN),
+                        false
+                    ))
+                }
+            }
+
+            draw();
+        }
+
+        const onMouseHover = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            const i = Math.floor((mouseX - xPadding) / (CELLSIZE + CELLMARGIN));
+            const j = Math.floor((mouseY - yPadding) / (CELLSIZE + CELLMARGIN));
+
+            const cell = cells[(j + 1) * (xCount + 2) + i];
+            if (cell == undefined) {
+                console.log(i, xCount, j, yCount);
+                return;
+            }
+            cell.alive = true;
+
+            ctx.fillStyle = cell.alive ? "lightgrey" : "black";
+            ctx.fillRect(
+                cell.xcoord,
+                cell.ycoord,
+                CELLSIZE,
+                CELLSIZE
+            )
+        }
+
+        window.addEventListener("resize", resizeCanvas, false);
+        resizeCanvas();
+
+        canvas.onmousemove = onMouseHover
+
+        setInterval(step, FRAMERATE);
+    </script>
 </body>
 </html>
