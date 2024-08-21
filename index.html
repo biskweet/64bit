@@ -3,23 +3,33 @@
 <head>
     <title>64bit.dev for sale!</title>
     <style type="text/css">
+        html, body {
+            overscroll-behavior: none;
+        }
+
         body, #gol {
             padding: 0;
             margin: 0;
             border: 0;
+            background-color: black;
         }
 
         #gol {
             position: absolute;
             width: 100%;
             height: 100%;
-            background-color: black;
         }
     </style>
 </head>
 <body>
-    <canvas id="gol"></canvas>
+    <div id="container">
+        <canvas id="gol"></canvas>
+    </div>
     <script>
+        window.mobileCheck = function() {
+            return window.innerHeight > window.innerWidth;
+        };
+
         class Cell {
             constructor(x, y, alive) {
                 this.xcoord = x;
@@ -42,7 +52,7 @@
         let drawn = false;
         let cells = [];
 
-        const CELLSIZE = 10; // px
+        const CELLSIZE = window.mobileCheck() ? 20 : 10; // px
         const CELLMARGIN = 3; // px
         const FRAMERATE = 1000 * 1 / 10;
 
@@ -84,12 +94,12 @@
         }
 
         const draw = () => {
+            // Redraw background
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             for (const cell of cells) {
-                try {
                 ctx.fillStyle = cell.alive ? "lightgrey" : "black";
-                } catch (err) {
-                    console.log(cells)
-                }
 
                 ctx.fillRect(
                     cell.xcoord,
@@ -98,8 +108,6 @@
                     CELLSIZE
                 )
             }
-
-            drawn = true;
         }
 
         const resizeCanvas = () => {
@@ -172,7 +180,22 @@
         canvas.onmousemove = onMouseHover
         canvas.addEventListener("touchmove", onTouchMove);
 
-        setInterval(step, FRAMERATE);
+        let intervalId = setInterval(step, FRAMERATE);
+
+        document.onkeypress = (event) => {
+            event = event || window.event;
+
+            if (event.key == "p") {
+                if (intervalId > 0) {
+                    clearInterval(intervalId);
+                    intervalId = 0;
+                } else {
+                    intervalId = setInterval(step, FRAMERATE);
+                }
+            } else if (event.key == "n") {
+                step();
+            }
+        }
     </script>
 </body>
 </html>
