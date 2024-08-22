@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>64bit.dev for sale!</title>
+    <title>64bit</title>
     <style type="text/css">
+        :root {
+            --fs: 13px;
+            --fm: 10px;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
         html, body {
             overscroll-behavior: none;
         }
@@ -19,11 +26,54 @@
             width: 100%;
             height: 100%;
         }
+
+        #explanation {
+            left: var(--fm);
+        }
+
+        #github {
+            right: var(--fm);
+        }
+
+        #cmds {
+            transform: translateX(-50%);
+            left: 50%;
+        }
+
+        #footer div {
+            color: lightgray;
+            position: absolute;
+            bottom: var(--fm);
+            font-family: "Ubuntu Mono", monospace;
+            font-size: var(--fs);
+        }
+
+        a {
+            color: lightgray;
+        }
+
+        #github svg {
+            filter: invert(100%);
+            position: relative;
+            top: 5px
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <canvas id="gol"></canvas>
+        <div id="footer">
+            <div id="explanation" class="text">Left click creates life, right click destroys it</div>
+            <div id="cmds">P pauses, N progresses one step</div>
+            <div id="github">
+                <a href="https://github.com/biskweet/64bit/" target="_blank" rel="noopener noreferrer">
+                    Check it out on github
+                    <svg height="20" width="20" viewBox="0 0 24 24">
+                        <path d="M12.5.75C6.146.75 1 5.896 1 12.25c0 5.089 3.292 9.387 7.863 10.91.575.101.79-.244.79-.546 0-.273-.014-1.178-.014-2.142-2.889.532-3.636-.704-3.866-1.35-.13-.331-.69-1.352-1.18-1.625-.402-.216-.977-.748-.014-.762.906-.014 1.553.834 1.769 1.179 1.035 1.74 2.688 1.25 3.349.948.1-.747.402-1.25.733-1.538-2.559-.287-5.232-1.279-5.232-5.678 0-1.25.445-2.285 1.178-3.09-.115-.288-.517-1.467.115-3.048 0 0 .963-.302 3.163 1.179.92-.259 1.897-.388 2.875-.388.977 0 1.955.13 2.875.388 2.2-1.495 3.162-1.179 3.162-1.179.633 1.581.23 2.76.115 3.048.733.805 1.179 1.825 1.179 3.09 0 4.413-2.688 5.39-5.247 5.678.417.36.776 1.05.776 2.128 0 1.538-.014 2.774-.014 3.162 0 .302.216.662.79.547C20.709 21.637 24 17.324 24 12.25 24 5.896 18.854.75 12.5.75Z"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
     <script>
         window.mobileCheck = function() {
@@ -49,12 +99,13 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let drawn = false;
         let cells = [];
 
         const CELLSIZE = window.mobileCheck() ? 20 : 10; // px
         const CELLMARGIN = 3; // px
         const FRAMERATE = 1000 * 1 / 10;
+        let ALIVE_COLOR = "red", DEAD_COLOR = "black", BG_COLOR = "black";
+        let hueDeg = 0;
 
         let xPadding = 0;
         let yPadding = 0;
@@ -70,17 +121,16 @@
                         cells[mod(j - 1, yCount + 2) * (xCount + 2) + mod(i - 1, xCount + 2)],
                         cells[mod(j - 1, yCount + 2) * (xCount + 2) + i],
                         cells[mod(j - 1, yCount + 2) * (xCount + 2) + mod(i + 1, xCount + 2)],
-                        cells[j * (xCount + 2) + mod(i - 1, xCount)],
-                        cells[j * (xCount + 2) + mod(i + 1, xCount)],
+                        cells[j * (xCount + 2) + mod(i - 1, xCount + 2)],
+                        cells[j * (xCount + 2) + mod(i + 1, xCount + 2)],
                         cells[mod(j + 1, yCount + 2) * (xCount + 2) + mod(i - 1, xCount + 2)],
                         cells[mod(j + 1, yCount + 2) * (xCount + 2) + i],
                         cells[mod(j + 1, yCount + 2) * (xCount + 2) + mod(i + 1, xCount + 2)]
                     ];
 
                     const aliveNeighborsCount = neighbors.reduce((total, cell) => total + cell.alive, 0);
-                    const cell = cells[j * (xCount + 2) + i];
 
-                    let newCell = cell.clone();
+                    let newCell = cells[j * (xCount + 2) + i].clone();
 
                     newCell.alive = (aliveNeighborsCount == 3) || (newCell.alive && aliveNeighborsCount == 2);
 
@@ -90,16 +140,23 @@
 
             cells = newCells;
 
-            draw()
+            updateHue();
+
+            draw();
+        }
+
+        const updateHue = () => {
+            hueDeg = mod(hueDeg + 10, 360);
+            canvas.style.filter = `hue-rotate(${hueDeg}deg) brightness(200%)`;
         }
 
         const draw = () => {
             // Redraw background
-            ctx.fillStyle = "black";
+            ctx.fillStyle = BG_COLOR
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (const cell of cells) {
-                ctx.fillStyle = cell.alive ? "lightgrey" : "black";
+                ctx.fillStyle = getCellColor(cell);
 
                 ctx.fillRect(
                     cell.xcoord,
@@ -109,6 +166,8 @@
                 )
             }
         }
+
+        const getCellColor = (cell) => cell.alive ? ALIVE_COLOR : DEAD_COLOR;
 
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
@@ -135,34 +194,24 @@
             draw();
         }
 
-        const wakeUpCell = (mouseX, mouseY) => {
+        const toggleCell = (mouseX, mouseY, alive) => {
             const i = Math.floor((mouseX - xPadding) / (CELLSIZE + CELLMARGIN));
             const j = Math.floor((mouseY - yPadding) / (CELLSIZE + CELLMARGIN));
 
-            const cell = cells[(j + 1) * (xCount + 2) + i];
-            if (cell == undefined) {
-                console.log(i, xCount, j, yCount);
+            try {
+                const cell = cells[j * (xCount + 2) + i];
+                cell.alive = alive;
+                ctx.fillStyle = alive ? ALIVE_COLOR : DEAD_COLOR;
+                ctx.fillRect(
+                    cell.xcoord,
+                    cell.ycoord,
+                    CELLSIZE,
+                    CELLSIZE
+                )
+            } catch {
+                console.log(i, j, xCount + 2, yCount + 2);
                 return;
             }
-            cell.alive = true;
-
-            ctx.fillStyle = cell.alive ? "lightgrey" : "black";
-            ctx.fillRect(
-                cell.xcoord,
-                cell.ycoord,
-                CELLSIZE,
-                CELLSIZE
-            )
-        }
-
-        const onMouseHover = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const mouseX = event.clientX;
-            const mouseY = event.clientY;
-
-            wakeUpCell(mouseX, mouseY);
         }
 
         const onTouchMove = (event) => {
@@ -177,7 +226,25 @@
         window.addEventListener("resize", resizeCanvas, false);
         resizeCanvas();
 
-        canvas.onmousemove = onMouseHover
+        canvas.onmousedown = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            toggleCell(event.clientX, event.clientY, event.button == 0);
+
+            canvas.onmousemove = (e) => toggleCell(e.clientX, e.clientY, event.button == 0);
+            return false;
+        }
+
+        canvas.onmouseup = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            canvas.onmousemove = () => {};
+        }
+
+        canvas.oncontextmenu = () => false;
+
         canvas.addEventListener("touchmove", onTouchMove);
 
         let intervalId = setInterval(step, FRAMERATE);
