@@ -163,7 +163,7 @@
                     cell.ycoord,
                     CELLSIZE,
                     CELLSIZE
-                )
+                );
             }
         }
 
@@ -200,6 +200,10 @@
 
             try {
                 const cell = cells[j * (xCount + 2) + i];
+
+                if (cell.alive == alive)
+                    return;
+
                 cell.alive = alive;
                 ctx.fillStyle = alive ? ALIVE_COLOR : DEAD_COLOR;
                 ctx.fillRect(
@@ -207,7 +211,7 @@
                     cell.ycoord,
                     CELLSIZE,
                     CELLSIZE
-                )
+                );
             } catch {
                 console.log(i, j, xCount + 2, yCount + 2);
                 return;
@@ -216,11 +220,8 @@
 
         const onTouchMove = (event) => {
             const touch = event.touches[0];
-            var mouseEvent = new MouseEvent("mousemove", {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            canvas.dispatchEvent(mouseEvent);
+
+            toggleCell(touch.clientX, touch.clientY, true);
         }
 
         window.addEventListener("resize", resizeCanvas, false);
